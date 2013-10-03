@@ -2,41 +2,25 @@
 require('/home/mackeral/Web/phpIncludes/config.php');
 switch($_REQUEST['action']){
     case 'downloads':
-        $m = new MongoClient();
+        //$m = new MongoClient();
+        $m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
+
         $db = $m->selectDB('repos');
         $collection = new MongoCollection($db, 'statistics');
-        
         if(empty($request['identifier'])){
             $results = $collection->aggregate(array(
                     '$group' => array(
-                        '_id' => '$identifier',
+                        '_id' => '$dcIdentifier',
                        'total' => array('$sum' => '$downloads')
                     )
                 )
             );
-            
             $downloads = array();
             foreach($results['result'] as $result) $downloads[$result['_id']] = $result['total'];
         } else {
             // implement
         }
-        
         echo json_encode($downloads);
-        //print_r($downloads);
-
-$out = $c->aggregate(array(
-        '$group' => array(
-            '_id' => '$state',
-           'totalPop' => array('$sum' => '$pop')
-        )
-    ),
-    array(
-        '$match' => array('totalPop' => array('$gte' => 10*1000*1000))
-    )
-);
-
-
-
         break;
     case 'personalAuthors':
         $institution = $_REQUEST['institution'];
