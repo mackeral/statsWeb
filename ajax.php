@@ -2,9 +2,7 @@
 require('/home/mackeral/Web/phpIncludes/config.php');
 switch($_REQUEST['action']){
     case 'downloads':
-        //$m = new MongoClient();
         $m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
-
         $db = $m->selectDB('repos');
         $collection = new MongoCollection($db, 'statistics');
         if(empty($request['identifier'])){
@@ -24,7 +22,7 @@ switch($_REQUEST['action']){
         break;
     case 'personalAuthors':
         $institution = $_REQUEST['institution'];
-        $m = new MongoClient();
+        $m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
         $db = $m->selectDB('repos');
         $collection = new MongoCollection($db, 'authors');
         $institutions = $collection->distinct('institution');

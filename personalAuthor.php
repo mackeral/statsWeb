@@ -3,7 +3,7 @@ require('/home/mackeral/Web/phpIncludes/config.php');
 $chunks = explode(', ', $request['q']);
 $author = "{$chunks[1]} {$chunks[0]}";
 
-$m = new MongoClient();
+$m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
 $db = $m->selectDB('repos');
 $collection = new MongoCollection($db, 'citations');
 $citations = array();
@@ -18,7 +18,6 @@ $page->addContent(HTMLLib::p('profile-like. includes info from authority service
 $page->addContent(HTMLLib::ol($citations, null, false));
 $page->addScript('$.getJSON("/stats/ajax.php?action=downloads", function(data) {
     $("ol li").each(function(i,liO){
-        //$(liO).append($("span").text(data[$(liO).attr("id")]));
         if($(liO).attr("id") in data) $(liO).append("<span class=badge>" + data[$(liO).attr("id")] + "</span>");
     });
 });', 'load');

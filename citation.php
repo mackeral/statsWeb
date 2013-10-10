@@ -1,6 +1,6 @@
 <?php
 require('/home/mackeral/Web/phpIncludes/config.php');
-$m = new MongoClient();
+$m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
 $db = $m->selectDB('repos');
 $citations = new MongoCollection($db, 'citations');
 $citation = $citations->findOne(array('identifier'=>$request['identifier']));
@@ -14,9 +14,9 @@ $page->addContent(HTMLLib::element('dl', $itemDetails, array('class'=>'dl-horizo
 $page->addContent(HTMLLib::p('metadata from any kind of harvest, e.g. name authority', array('class'=>'lead')));
 
 $statistics = new MongoCollection($db, 'statistics');
-//db.statistics.find({dcIdentifier: 'http://scholarship.law.berkeley.edu/californialawreview/vol88/iss6/1'}, {'_id': 0, 'downloads': 1, 'dlDate': 1}) 
 $downloads = array();
 $cursor = $statistics->find(array('dcIdentifier'=>$citation['dcIdentifier'][0]), array('_id'=>0, 'downloads'=>1, 'dlDate'=>1));
+$cursor->sort(array('dlDate'=>1));
 foreach($cursor as $statistic) $downloads[] = '["' . date('Y-m-d', $statistic['dlDate']->sec) . '", ' . $statistic['downloads'] . ']';
 $page->addScript('var statistics = [' . implode(',', $downloads) . '];');
 $page->addScript('/stats/js/d3/d3.v3.min.js');
