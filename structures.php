@@ -1,47 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<title>Repository Statistics</title>
-	<!--#include file="head.html" -->
-<style>
-body { padding-top: 50px; }
-.repoContainer {
-	padding: 40px 15px;
+<?php
+require('/home/mackeral/Web/phpIncludes/config.php');
+$page = new StatsPage('Structures');
+
+$m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
+$db = $m->selectDB('repos');
+$citations = new MongoCollection($db, 'citations');
+$counts = $citations->group(
+    array("setSpec"=>1),
+    array("count"=>0),
+    "function(cur, result){ result.count += 1 }"
+);
+
+// bjil => Structure object
+$setSpecs = array();
+foreach($counts['retval'] as $setSpec) {
+    $chunks = explode(':', $setSpec['setSpec']);
+    $setSpecs[$chunks[1]] = new SetSpec($chunks[1], $setSpecLabels[$chunks[1]]);
+    $setSpecs[$chunks[1]]->setCitationCount($setSpec['count']);
 }
-</style>
-</head>
-<body>
-<!--#include file="nav.php" -->
-<div class="container">
-	<div class="repoContainer">
-		<h1>Structures</h1>
-		<table class="table sortable">
-			<thead>
-				<tr>
-					<th data-defaultsort="asc">Structure</th>
-					<th># documents</th>
-					<th># downloads</th>
-				</tr>
-			</thead><tbody>
-				<tr>
-					<td><a href='structure.html'>Student Journals</a></td>
-					<td>4567</td>
-					<td>891237</td>
-				</tr>			
-				<tr>
-					<td><a href='structure.html'>Centers</a></td>
-					<td>9872</td>
-					<td>293475</td>
-				</tr>			
-				<tr>
-					<td><a href='structure.html'>Faculty Scholarship</a></td>
-					<td>123</td>
-					<td>1972368</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
-</div><!-- /.container -->
-<!--#include file="foot.html" -->
-</body>
-</html>
+
+// dcIdentifier => setSpec
+$cursor = $citations->find(array(), array('dcIdentifier'=>true, 'setSpec'=>true));
+$dcIdentifiers = array();
+foreach($cursor as $citation) $dcIdentifiers[$citation['dcIdentifier'][0]] = $citation['setSpec'];
+
+// dcIdentifier => downloadCount
+$statistics = new MongoCollection($db, 'statistics');
+$results = $statistics->aggregate(
+    array(
+        '$group' => array(
+            '_id' => '$dcIdentifier',
+           'total' => array('$sum' => '$downloads')
+        )
+    )
+);
+$downloads = array();
+foreach($results['result'] as $result) $downloads[$result['_id']] = $result['total'];
+
+$journals = array('aalj', 'bjalp', 'bjil', 'bjcl', 'bjesl', 'californialawreview');
+$structures = array();
+$structures['Journals'] = new Structure('Journals');
+$structures['Faculty Publications'] = new Structure('Faculty Publications');
+foreach($setSpecs as $id=>$label){
+    if(in_array($id, $journals)) $structures['Journals']->addCitationCount($label->getCitationCount());
+    else if($id=='facpubs') $structures['Faculty Publications']->addCitationCount($label->getCitationCount());
+}
+
+$trs = array();
+foreach($structures as $structure){
+    $trs[] = HTMLLib::tr(array(
+        HTMLLib::a($structure->label, "structure.php?label={$structure->label}"),
+        $structure->citationCount,
+        $structure->downloadCount
+    ));
+}
+
+$page->addContent(HTMLLib::table(
+    $trs,
+    array('class'=>'sortable'),
+    HTMLLib::tr(array(
+        HTMLLib::td('Structure', array('data-defaultsort'=>'asc'), true),
+        HTMLLib::td('# documents', null, true),
+        HTMLLib::td('# downloads', null, true)
+    ), false, null, true)
+));
+
+echo $page;
+?>
