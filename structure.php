@@ -43,8 +43,6 @@ switch($request['label']){
         foreach($results['result'] as $result) $downloads[$result['_id']] = $result['total'];
         foreach($downloads as $dcIdentifier=>$downloadCount) $setSpecs[$dcIdentifiers[$dcIdentifier]]->addDownloadCount($downloadCount);
         
-        $journals = array('aalj', 'bjalp', 'bjil', 'bjcl', 'bjesl', 'californialawreview');
-        
         $trs = array();
         foreach($journals as $journal){
             $trs[] = HTMLLib::tr(array(
