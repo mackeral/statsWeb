@@ -131,7 +131,12 @@ d3.csv("downloads.php?dcIdentifier=' . $citation['dcIdentifier'][0] . '", functi
         .attr("class", "line")
         .attr("d", function(d){ return line(d.values); })
         .style("stroke", function(d){ return color(d.name); });
-    console.log("hi");
+    count.append("text")
+        .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
+        .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.counts) + ")"; })
+        .attr("x", -10)
+        .attr("dy", "-2em")
+        .text(function(d) { return d.name; });
 });
 ', 'load');
 echo $page;

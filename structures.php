@@ -11,7 +11,7 @@ $counts = $citations->group(
     "function(cur, result){ result.count += 1 }"
 );
 
-// bjil => Structure object
+// bjil => SetSpec object
 $setSpecs = array();
 foreach($counts['retval'] as $setSpec) {
     $chunks = explode(':', $setSpec['setSpec']);
@@ -22,7 +22,7 @@ foreach($counts['retval'] as $setSpec) {
 // dcIdentifier => setSpec
 $cursor = $citations->find(array(), array('dcIdentifier'=>true, 'setSpec'=>true));
 $dcIdentifiers = array();
-foreach($cursor as $citation) $dcIdentifiers[$citation['dcIdentifier'][0]] = $citation['setSpec'];
+foreach($cursor as $citation) $dcIdentifiers[$citation['dcIdentifier'][0]] = substr($citation['setSpec'], 12);
 
 // dcIdentifier => downloadCount
 $statistics = new MongoCollection($db, 'statistics');
@@ -37,13 +37,21 @@ $results = $statistics->aggregate(
 $downloads = array();
 foreach($results['result'] as $result) $downloads[$result['_id']] = $result['total'];
 
+foreach($downloads as $dcIdentifier=>$downloadCount) $setSpecs[$dcIdentifiers[$dcIdentifier]]->addDownloadCount($downloadCount);
+
 $journals = array('aalj', 'bjalp', 'bjil', 'bjcl', 'bjesl', 'californialawreview');
 $structures = array();
 $structures['Journals'] = new Structure('Journals');
 $structures['Faculty Publications'] = new Structure('Faculty Publications');
 foreach($setSpecs as $id=>$label){
-    if(in_array($id, $journals)) $structures['Journals']->addCitationCount($label->getCitationCount());
-    else if($id=='facpubs') $structures['Faculty Publications']->addCitationCount($label->getCitationCount());
+    if(in_array($id, $journals)) {
+        $structures['Journals']->addCitationCount($label->getCitationCount());
+        $structures['Journals']->addDownloadCount($label->getDownloadCount());
+    }
+    else if($id=='facpubs') {
+        $structures['Faculty Publications']->addCitationCount($label->getCitationCount());
+        $structures['Faculty Publications']->addDownloadCount($label->getDownloadCount());
+    }
 }
 
 $trs = array();

@@ -10,7 +10,7 @@ $institutions = $collection->distinct('institution');
 if(!in_array($institution, $institutions)) die('invalid invocation');
 
 $page = new StatsPage("Institutional Author: $institution");
-$page->addInternalCSS('.nav.nav-tabs { margin: 1em 0; }');
+$page->addInternalCSS('.nav.nav-tabs { margin: 1em 0; } .repoContainer .nav > li > a { padding: 10px 11px; }');
 
 $page->addContent(HTMLLib::form(null, null, HTMLLib::div(
     HTMLLib::div(
