@@ -1,5 +1,5 @@
 <?php
-require('/home/mackeral/Web/phpIncludes/config.php');
+require('/var/www/phpIncludes/config.php');
 $page = new StatsPage('Home Page');
 $page->addInternalCSS('.repoContainer {
 	padding: 40px 15px;
