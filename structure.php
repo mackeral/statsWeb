@@ -1,12 +1,13 @@
 <?php
-require('/home/mackeral/Web/phpIncludes/config.php');
-$page = new StatsPage($request['label']);
+require('/var/www/phpIncludes/config.php');
+
+$page = new StatsPage("Structures: {$request['institution']}", $logInOut);
 
 switch($request['label']){
     case 'Journals':
         // show list of journals with citation and download counts
         
-        $m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
+        $m = new MongoClient();
         $db = $m->selectDB('repos');
         
         $citations = new MongoCollection($db, 'citations');

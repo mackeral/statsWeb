@@ -1,6 +1,7 @@
 <?php
 require('/var/www/phpIncludes/config.php');
-$page = new StatsPage('Home Page');
+
+$page = new StatsPage('Home Page', $logInOut);
 $page->addInternalCSS('.repoContainer {
 	padding: 40px 15px;
 	text-align: center;

@@ -1,42 +1,39 @@
 <?php
-require('/home/mackeral/Web/phpIncludes/config.php');
-$m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
-$db = $m->selectDB('repos');
-$citations = new MongoCollection($db, 'citations');
+require('/var/www/phpIncludes/config.php');
 $citation = $citations->findOne(array('identifier'=>$request['identifier']));
-$itemDetails = '';
+if(!empty($citation['ingestDate'])) $citation['ingestDate'] = date('Y-m-d', $citation['ingestDate']->sec);
+
+$today = new DateTime();
+$statement = $mysql->prepare('select sum(dlN) as downloads from stats where dcID=? and dlDate >= ?');
+$statement->bind_param('ss', $dcIdentifier, $today->format('Y-m-01'));
+$statement->execute();
+$statement->bind_result($downloads);
+$statement->fetch();
+$downloadsThisMonth = ($downloads) ? $downloads : 0;
+
+$fullDetails = '';
 foreach($citation as $k=>$v) {
     if(is_array($v)) $v = implode('<br>', $v);
-    $itemDetails .= HTMLLib::element('dt', $k) . HTMLLib::element('dd', $v);
+    $fullDetails .= HTMLLib::element('dt', $k) . HTMLLib::element('dd', $v);
     if($k=='dcIdentifier') $dcIdentifier = $v;
 }
 
+$displayKeys = array('creator'=>'creator', 'dcTitle'=>'title', 'dcType'=>'type', 'dcFormat'=>'format', 'dcSubject'=>'subject');
+$displayDetails = '';
+foreach($displayKeys as $k=>$v){
+	$displayValue = (is_array($citation[$k])) ? implode('; ', $citation[$k]) : $citation[$k];
+	$displayDetails .= HTMLLib::element('dt', $v) . HTMLLib::element('dd', $displayValue);
+}
+$displayDetails .= HTMLLib::element('dt', 'month so far') . HTMLLib::element('dd', $downloadsThisMonth);
 
-$statistics = new MongoCollection($db, 'statistics');
-//db.statistics.aggregate({$match: {"dcIdentifier": "http://scholarship.law.berkeley.edu/facpubs/329", "dlDate": {$gte: new ISODate("2013-09-00T00:00:00Z")}}}, {$group: {_id: "dcIdentifier", dlThisMonth: { $sum : "$downloads" }}})
-$pipeline = array(
-   array('$match'=>array(
-        'dcIdentifier'=>$dcIdentifier,
-        'dlDate'=>array(
-            '$gte'=> new MongoDate(strtotime("2013-09-00 00:00:00"))
-        )
-    )), array('$group'=>array(
-        '_id'=>"dcIdentifier",
-        'dlThisMonth'=>array(
-            '$sum'=>'$downloads'
-        )
-    ))
-);
-$results = $statistics->aggregate($pipeline);
-$itemDetails .= HTMLLib::element('dt', 'month so far') . HTMLLib::element('dd', $results['result'][0]['dlThisMonth']);
-
-
-$page = new StatsPage($citation['dcTitle']);
-$page->addContent(HTMLLib::element('dl', $itemDetails, array('class'=>'dl-horizontal')));
+$page = new StatsPage($citation['dcTitle'], $logInOut);
+$page->addContent(HTMLLib::button('details', 'detailsToggle', array('class'=>'btn pull-right')));
+$page->addContent(HTMLLib::element('dl', $fullDetails, array('class'=>'dl-horizontal', 'id'=>'fullDetails')));
+$page->addContent(HTMLLib::element('dl', $displayDetails, array('class'=>'dl-horizontal', 'id'=>'displayDetails')));
 $page->addContent(HTMLLib::p('metadata from any kind of harvest, e.g. name authority', array('class'=>'lead')));
 
-$page->addScript('/stats/js/d3/d3.v3.min.js');
-$page->addInternalCSS('
+$page->addScript('/statsWeb/js/d3/d3.v3.min.js');
+$page->addInternalCSS('#fullDetails { display: none; }
 #downloadsChart { font: 10px sans-serif; }
 .axis path, .axis line {
     fill: none;
@@ -48,7 +45,8 @@ $page->addInternalCSS('
     fill: none;
     stroke: steelblue;
     stroke-width: 1.5px;
-}');
+}
+.repoContainer .dl-horizontal dd:before, .repoContainer .dl-horizontal dd:after { content: none; }');
 $page->addContent(HTMLLib::div('', array('id'=>'downloadsChart')));
 $page->addScript('
 var margin = {top: 20, right: 80, bottom: 30, left: 50},
@@ -138,6 +136,6 @@ d3.csv("downloads.php?dcIdentifier=' . $citation['dcIdentifier'][0] . '", functi
         .attr("dy", "-2em")
         .text(function(d) { return d.name; });
 });
-', 'load');
+$("#detailsToggle").click(function(){ $("#fullDetails, #displayDetails").toggle(); });', 'load');
 echo $page;
 ?>

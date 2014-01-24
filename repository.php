@@ -1,15 +1,11 @@
 <?php
-require('/home/mackeral/Web/phpIncludes/config.php');
-
+require('/var/www/phpIncludes/config.php');
 $institution = $shortNames[$request['institution']];
 
-$m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
-$db = $m->selectDB('repos');
-$collection = new MongoCollection($db, 'authors');
-$institutions = $collection->distinct('institution');
+$institutions = $authors->distinct('institution');
 if(!in_array($institution, $institutions)) die('invalid invocation');
 
-$page = new StatsPage("Repository: {$request['institution']}");
+$page = new StatsPage("Repository: {$request['institution']}", $logInOut);
 $page->addInternalCSS('.repoContainer .nav > li > a { padding: 10px 11px; } .nav.nav-tabs { margin: 1em 0; }');
 
 $page->addContent(HTMLLib::form(null, null, HTMLLib::div(
@@ -25,15 +21,14 @@ $page->addContent(HTMLLib::form(null, null, HTMLLib::div(
     , array('class'=>'form-group'))
 ), array('class'=>'form-horizontal', 'role'=>'form')));
 
-
-$citations = new MongoCollection($db, 'citations');
 $dcCreators = array();
 $cursor = $citations->distinct('dcCreator');
 foreach($cursor as $dcCreator) $dcCreators[trim(strtoupper($dcCreator), ' ,')] = trim($dcCreator, ', ');
 ksort($dcCreators);
 
+$pager = array();
 foreach ($dcCreators as $dcCreator) {
-    $authorLink = HTMLLib::a($dcCreator, "/stats/personalAuthor.php?q=$dcCreator");
+    $authorLink = HTMLLib::a($dcCreator, "/statsWeb/personalAuthor.php?q=$dcCreator");
     if(!array_key_exists(strtoupper($dcCreator[0]), $pager)) $pager[strtoupper($dcCreator[0])] = array();
     $pager[strtoupper($dcCreator[0])][] = $authorLink;
     $allAuthors[] = $authorLink;
@@ -56,5 +51,6 @@ $('#author').typeahead({ name: 'author', prefetch: 'ajax.php?action=personalAuth
 $('#structure').typeahead({name: 'structure', prefetch: 'ajax.php?action=words' })
     .bind('typeahead:selected', function(obj, datum){ location.href = 'structure.php?q=' + datum.value + 'r=thisRepository'; });
 ");
+
 echo $page;
 ?>

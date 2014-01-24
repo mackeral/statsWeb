@@ -1,10 +1,7 @@
 <?php
-require('/home/mackeral/Web/phpIncludes/config.php');
-$page = new StatsPage('Repositories');
+require('/var/www/phpIncludes/config.php');
+$page = new StatsPage('Repositories', $logInOut);
 
-$m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
-$db = $m->selectDB('repos');
-$citations = new MongoCollection($db, 'citations');
 $counts = $citations->group(
     array("dcPublisher"=>1),
     array("count"=>0),
@@ -18,33 +15,26 @@ foreach($counts['retval'] as $repository) {
     $repositories[$repository['dcPublisher']]->setIdentifierPrefix($dcIdentifiers[$repository['dcPublisher']]);
 }
 
-$downloads = new MongoCollection($db, 'statistics');
-$counts = $downloads->aggregate(
-    array(
-        '$group' => array(
-            "_id" => '$repo',
-            "totalDL" => array('$sum' => '$downloads')
-        )
-    )
-);
-foreach($counts['result'] as $count) $repositories[$count['_id']]->setDownloadCount($count['totalDL']);
+$result = $mysql->query('select repo,sum(dlN) as downloads from stats group by repo;');
+while($row = $result->fetch_assoc())
+	$repositories[$row['repo']]->setDownloadCount($row['downloads']);
 
 $trs = array();
 foreach($repositories as $repository){
     $trs[] = HTMLLib::tr(array(
-        HTMLLib::a($repository->label, "/stats/repository.php?institution={$repository->label}"),
+        HTMLLib::a($repository->label, "/statsWeb/repository.php?institution={$repository->label}"),
         $repository->citationCount,
         $repository->downloadCount
     ));
 }
 
 $trs[] = HTMLLib::tr(array(
-    HTMLLib::a('Duke', '/stats/repository.php?institution=Duke'),
+    HTMLLib::a('Duke', '/statsWeb/repository.php?institution=Duke'),
     '123',
     '456'
 ));
 $trs[] = HTMLLib::tr(array(
-    HTMLLib::a('Harvard', '/stats/repository.php?institution=Harvard'),
+    HTMLLib::a('Harvard', '/statsWeb/repository.php?institution=Harvard'),
     '123',
     '456'
 ));

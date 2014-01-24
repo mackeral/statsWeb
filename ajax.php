@@ -1,20 +1,11 @@
 <?php
-require('/home/mackeral/Web/phpIncludes/config.php');
+require('/var/www/phpIncludes/config.php');
 switch($_REQUEST['action']){
     case 'downloads':
-        $m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
-        $db = $m->selectDB('repos');
-        $collection = new MongoCollection($db, 'statistics');
         if(empty($request['identifier'])){
-            $results = $collection->aggregate(array(
-                    '$group' => array(
-                        '_id' => '$dcIdentifier',
-                       'total' => array('$sum' => '$downloads')
-                    )
-                )
-            );
+            $result = $mysql->query('select dcID,sum(dlN) as downloads from stats group by dcID');
             $downloads = array();
-            foreach($results['result'] as $result) $downloads[$result['_id']] = $result['total'];
+            while($row = $result->fetch_assoc()) $downloads[$row['dcID']] = $row['downloads'];
         } else {
             // implement
         }
@@ -22,15 +13,16 @@ switch($_REQUEST['action']){
         break;
     case 'personalAuthors':
         $institution = $_REQUEST['institution'];
-        $m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
-        $db = $m->selectDB('repos');
-        $collection = new MongoCollection($db, 'authors');
+/*
+        $m = new MongoClient();
+        $collection = $m->repos->authors;
         $institutions = $collection->distinct('institution');
         if(!in_array($institution, $institutions)) die('invalid invocation');
         $authors = array();
         $cursor = $collection->find(array('institution' => $institution));
         foreach ($cursor as $doc) $authors[] = "{$doc['lname']}, {$doc['fname']}";
         echo json_encode($authors);
+*/
         break;
     case 'words':
         $lines = file('words.txt');

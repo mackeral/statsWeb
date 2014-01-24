@@ -1,5 +1,5 @@
 <?php
-require('/home/mackeral/Web/phpIncludes/config.php');
+require('/var/www/phpIncludes/config.php');
 
 $institution = $request['institution'];
 
@@ -9,7 +9,7 @@ $collection = new MongoCollection($db, 'authors');
 $institutions = $collection->distinct('institution');
 if(!in_array($institution, $institutions)) die('invalid invocation');
 
-$page = new StatsPage("Institutional Author: $institution");
+$page = new StatsPage("Institutional Author: $institution", $logInOut);
 $page->addInternalCSS('.nav.nav-tabs { margin: 1em 0; } .repoContainer .nav > li > a { padding: 10px 11px; }');
 
 $page->addContent(HTMLLib::form(null, null, HTMLLib::div(
@@ -32,7 +32,7 @@ $cursor->sort(array('lname'=>1, 'fname'=>1));
 $authors = array();
 $pager = array();
 foreach ($cursor as $doc) {
-    $authorLink = HTMLLib::a("{$doc['lname']}, {$doc['fname']}", "/stats/personalAuthor.php?q={$doc['lname']}, {$doc['fname']}");
+    $authorLink = HTMLLib::a("{$doc['lname']}, {$doc['fname']}", "/statsWeb/personalAuthor.php?q={$doc['lname']}, {$doc['fname']}");
     if(!array_key_exists($doc['lname'][0], $pager)) $pager[$doc['lname'][0]] = array();
     $pager[$doc['lname'][0]][] = $authorLink;
     $allAuthors[] = $authorLink;

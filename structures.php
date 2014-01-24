@@ -1,11 +1,14 @@
 <?php
-require('/home/mackeral/Web/phpIncludes/config.php');
-$page = new StatsPage('Structures');
+require('/var/www/phpIncludes/config.php');
 
-$m = new MongoClient('mongodb://lawlibrary:unclezeb@ds063287.mongolab.com:63287/repos');
+$institution = $request['institution'];
+
+$m = new MongoClient();
 $db = $m->selectDB('repos');
 $citations = new MongoCollection($db, 'citations');
 $statistics = new MongoCollection($db, 'citations');
+
+$page = new StatsPage("Structures", $logInOut);
 
 $counts = $citations->group(
     array("setSpec"=>1),
@@ -41,18 +44,31 @@ foreach($results['result'] as $result) $downloads[$result['_id']] = $result['tot
 
 foreach($downloads as $dcIdentifier=>$downloadCount) $setSpecs[$dcIdentifiers[$dcIdentifier]]->addDownloadCount($downloadCount);
 
-$journals = array('aalj', 'bjalp', 'bjil', 'bjcl', 'bjesl', 'californialawreview');
+$journals = array('aalj', 'bblj', 'bjalp', 'bjil', 'bjcl', 'bjesl', 'californialawreview', 'bglj', 'jmeil', 'clrcircuit');
+$facpubs = array('facpubs');
+$symposia = array('bjalp_symposia','riesenfeld');
+$books = array('books');
 $structures = array();
 $structures['Journals'] = new Structure('Journals');
 $structures['Faculty Publications'] = new Structure('Faculty Publications');
+$structures['Symposia'] = new Structure ('Symposia');
+$structures['Books'] = new Structure ('Books');
 foreach($setSpecs as $id=>$label){
     if(in_array($id, $journals)) {
         $structures['Journals']->addCitationCount($label->getCitationCount());
         $structures['Journals']->addDownloadCount($label->getDownloadCount());
     }
-    else if($id=='facpubs') {
+    else if(in_array($id, $facpubs)) {
         $structures['Faculty Publications']->addCitationCount($label->getCitationCount());
         $structures['Faculty Publications']->addDownloadCount($label->getDownloadCount());
+    }
+	else if(in_array($id, $symposia)) {
+        $structures['Symposia']->addCitationCount($label->getCitationCount());
+        $structures['Symposia']->addDownloadCount($label->getDownloadCount());
+    }
+	else if(in_array($id, $books)) {
+        $structures['Books']->addCitationCount($label->getCitationCount());
+        $structures['Books']->addDownloadCount($label->getDownloadCount());
     }
 }
 

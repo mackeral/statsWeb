@@ -1,19 +1,19 @@
 <?php
 require('/var/www/phpIncludes/config.php');
-$page = new StatsPage('Institutional Authors');
+$page = new StatsPage('Institutional Authors', $logInOut);
 $trs = array();
 $trs[] = HTMLLib::tr(array(
-    HTMLLib::a('Duke', '/stats/institutionalAuthor.php?institution=Duke'),
+    HTMLLib::a('Duke', '/statsWeb/institutionalAuthor.php?institution=Duke'),
     '123',
     '456'
 ));
 $trs[] = HTMLLib::tr(array(
-    HTMLLib::a('Berkeley Law', '/stats/institutionalAuthor.php?institution=Berkeley Law'),
+    HTMLLib::a('Berkeley Law', '/statsWeb/institutionalAuthor.php?institution=Berkeley Law'),
     '123',
     '456'
 ));
 $trs[] = HTMLLib::tr(array(
-    HTMLLib::a('Harvard', '/stats/institutionalAuthor.php?institution=Harvard'),
+    HTMLLib::a('Harvard', '/statsWeb/institutionalAuthor.php?institution=Harvard'),
     '123',
     '456'
 ));
